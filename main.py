@@ -79,13 +79,15 @@ def searchList():
         messagebox.showwarning("Warning", "No tasks Available")
 
 def Clear():
-    task_listbox.delete(0, tk.END)
+     if messagebox.askyesno("Clear Tasks", "Are you sure you want to clear all tasks?"):
+        tdlist.clear()
+        task_listbox.delete(0, tk.END)
+        SaveToExternalFile(tdlist)
 
 
 def Exit():
     SaveToExternalFile(tdlist)
     root.quit()
-
 
 
 
