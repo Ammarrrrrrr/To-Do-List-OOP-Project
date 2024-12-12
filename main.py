@@ -38,6 +38,9 @@ class ToDoListApp:
 
         self.task_listbox.pack(side=tk.LEFT, fill=tk.BOTH)
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
+        #load the list on start
+        self.load_tasks()
 
         self.button_frame = tk.Frame(root)
         self.button_frame.pack(pady=10)
@@ -60,7 +63,7 @@ class ToDoListApp:
         self.exit_button = tk.Button(self.button_frame, text="Exit", command=self.exit_app, bg="lightgray")
         self.exit_button.pack(side=tk.LEFT, padx=5)
 
-        self.reset_button = tk.Button(self.button_frame, text="Reset List", command=self.reset_list, bg="lightgray")
+        self.reset_button = tk.Button(self.button_frame, text="Reset List", command=self.load_tasks, bg="lightgray")
         self.reset_button.pack(side=tk.LEFT, padx=5)
 
     def load_file(self):
@@ -128,13 +131,23 @@ class ToDoListApp:
 
     def mark_done(self):
         try:
-            task_index = self.task_listbox.curselection()
-            task = self.task_listbox.get(task_index)
-            self.task_listbox.delete(task_index)
-            self.task_listbox.insert(task_index, task + " - Done")
-            self.task_listbox.itemconfig(task_index, {'bg': 'lightgreen'}) 
+            task_index = self.task_listbox.curselection()[0]  # Get the selected task index
+            task = self.task_listbox.get(task_index)         # Get the selected task text
+
+            if " - Done" not in task:  # Avoid adding "- Done" multiple times
+                updated_task = task + " - Done"
+                self.tdlist[task_index] = updated_task       # Update the task in the list
+                self.save_to_file()                         # Save the updated list to the file
+
+                # Update the task in the listbox
+                self.task_listbox.delete(task_index)
+                self.task_listbox.insert(task_index, updated_task)
+                self.task_listbox.itemconfig(task_index, {'bg': 'lightgreen'}) 
+            else:
+                messagebox.showinfo("Info", "This task is already marked as done.")
         except IndexError:
             messagebox.showwarning("Selection Error", "Please select a task to mark as done!")
+
 
     def search_task(self):
         search_term = self.task_entry.get().lower()
@@ -147,10 +160,13 @@ class ToDoListApp:
             messagebox.showwarning("Warning", "No tasks Available")
 
 
-    def reset_list(self):
-        self.task_listbox.delete(0, tk.END)
-        for task in self.tdlist:
-            self.task_listbox.insert(tk.END, task)
+    def load_tasks(self):
+        self.task_listbox.delete(0, tk.END)  # Clear the listbox
+        for index, task in enumerate(self.tdlist):
+            self.task_listbox.insert(tk.END, task)  # Add task to the listbox
+            if " - Done" in task:
+                self.task_listbox.itemconfig(index, {'bg': 'lightgreen'})  # Highlight "done" tasks in green
+
 
 
     def clear_tasks(self):
