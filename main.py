@@ -63,7 +63,7 @@ class ToDoListApp:
         self.exit_button = tk.Button(self.button_frame, text="Exit", command=self.exit_app, bg="lightgray")
         self.exit_button.pack(side=tk.LEFT, padx=5)
 
-        self.reset_button = tk.Button(self.button_frame, text="Reset List", command=self.load_tasks, bg="lightgray")
+        self.reset_button = tk.Button(self.button_frame, text="Back", command=self.load_tasks, bg="lightgray")
         self.reset_button.pack(side=tk.LEFT, padx=5)
 
     def load_file(self):
