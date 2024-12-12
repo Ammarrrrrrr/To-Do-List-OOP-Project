@@ -7,6 +7,7 @@ Emma often forgets her tasks. She needs a simple, user-friendly application to m
 Design a GUI-based to-do list application that enables users to add, edit, delete, search, and manage their tasks seamlessly while providing persistent data storage.
 
 ---
+![image](https://github.com/user-attachments/assets/e3fec262-d144-4341-aa94-6dc2876db808)
 
 ## Features
 
