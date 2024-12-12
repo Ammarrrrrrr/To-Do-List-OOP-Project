@@ -2,132 +2,169 @@ import tkinter as tk
 from tkinter import messagebox
 import os
 
-def LoadFile(tdlist):
-    if os.path.exists("tasks.txt"):
-        with open("tasks.txt", "r") as file:
-            tdlist.extend(line.strip() for line in file)
-    else:
-        open("tasks.txt", "w").close()
+class ToDoListApp:
 
-def SaveToExternalFile(tdlist):
-    with open("tasks.txt", "w") as file:
-        for task in tdlist:
-            file.write(task + "\n")
+    def __init__(self, root):
+        self.root = root
+        self.root.title("To-Do List")
 
-def update_task_list():
-    task_listbox.delete(0, tk.END)
-    for task in tdlist:
-        task_listbox.insert(tk.END, task)
+        self.tdlist = []  
+        self.load_file()
 
-def addToList():
-    task = task_entry.get()
-    if task:
-        tdlist.append(task)
-        SaveToExternalFile(tdlist)
-        update_task_list()
-        task_entry.delete(0, tk.END)
+        self.title_label = tk.Label(root, text="To-Do List Application", font=("Helvetica", 16))
+        self.title_label.pack(pady=10)
 
-    else:
-        messagebox.showwarning("Input Error", "You must enter a task!")
+        self.task_frame = tk.Frame(root)
+        self.task_frame.pack(pady=10)
+       
+        self.task_entry = tk.Entry(self.task_frame, width=40, font=("Helvetica", 12))
+        self.task_entry.pack(side=tk.LEFT, padx=5)
 
+        self.add_button = tk.Button(self.task_frame, text="Add Task", command=self.add_task, bg="lightgreen")
+        self.add_button.pack(side=tk.LEFT)
 
-def editToList():
+        self.listbox_frame = tk.Frame(root)
+        self.listbox_frame.pack(pady=10)
 
+        self.scrollbar = tk.Scrollbar(self.listbox_frame, orient=tk.VERTICAL)
+        self.task_listbox = tk.Listbox(
+            self.listbox_frame, 
+            width=50, 
+            height=15, 
+            font=("Helvetica", 12), 
+            yscrollcommand=self.scrollbar.set
+        )
+        self.scrollbar.config(command=self.task_listbox.yview)
+
+        self.task_listbox.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.button_frame = tk.Frame(root)
+        self.button_frame.pack(pady=10)
+
+        self.delete_button = tk.Button(self.button_frame, text="Delete Task", command=self.delete_task, bg="lightcoral")
+        self.delete_button.pack(side=tk.LEFT, padx=5)
+
+        self.clear_button = tk.Button(self.button_frame, text="Clear All", command=self.clear_tasks, bg="lightblue")
+        self.clear_button.pack(side=tk.LEFT, padx=5)
+
+        self.edit_button = tk.Button(self.button_frame, text="Edit Task", command=self.edit_task, bg="lightyellow")
+        self.edit_button.pack(side=tk.LEFT, padx=5)
+
+        self.done_button = tk.Button(self.button_frame, text="Mark as Done", command=self.mark_done, bg="lightgreen")
+        self.done_button.pack(side=tk.LEFT, padx=5)
+
+        self.search_button = tk.Button(self.button_frame, text="Search Task", command=self.search_task, bg="lightblue")
+        self.search_button.pack(side=tk.LEFT, padx=5)
+
+        self.exit_button = tk.Button(self.button_frame, text="Exit", command=self.exit_app, bg="lightgray")
+        self.exit_button.pack(side=tk.LEFT, padx=5)
+
+        self.reset_button = tk.Button(self.button_frame, text="Reset List", command=self.reset_list, bg="lightgray")
+        self.reset_button.pack(side=tk.LEFT, padx=5)
+
+    def load_file(self):
+        if os.path.exists("tasks.txt"):
+            with open("tasks.txt", "r") as file:
+                self.tdlist = [line.strip() for line in file]
+        else:
+            open("tasks.txt", "w").close()
+
+    def save_to_file(self):
+        with open("tasks.txt", "w") as file:
+            for task in self.tdlist:
+                file.write(task + "\n")
+
+    def add_task(self):
+        task = self.task_entry.get()
+        if task:
+            self.tdlist.append(task)
+            self.save_to_file()
+            self.task_listbox.insert(tk.END, task)
+            self.task_entry.delete(0, tk.END)
+        else:
+            messagebox.showwarning("Input Error", "You must enter a task!")
+
+    def edit_task(self):
         try:
-            selected_task_index = task_listbox.curselection()[0]
-            ntask = task_entry.get()
-            if ntask:
-                task_listbox.delete(selected_task_index)
-                update_task_list()
-                tdlist[selected_task_index] = ntask
-                SaveToExternalFile(tdlist)
-            else:
-                messagebox.showwarning("Value Error", "You must select a task to Edit!")
+            selected_task_index = self.task_listbox.curselection()[0]
+            # Populate the entry field with the selected task for editing
+            selected_task = self.task_listbox.get(selected_task_index)
+            self.task_entry.delete(0, tk.END)
+            self.task_entry.insert(0, selected_task)
 
+            # Modify the button behavior to confirm editing
+            self.add_button.config(state=tk.DISABLED)
+            self.edit_button.config(text="Confirm Edit", command=lambda: self.confirm_edit(selected_task_index))
+
+        except IndexError:
+            messagebox.showwarning("Selection Error", "You must select a task to edit!")
+
+    def confirm_edit(self, index):
+        """Confirm the edit and update the task."""
+        new_task = self.task_entry.get().strip()
+        if new_task:
+            self.tdlist[index] = new_task  # Update the task in the list
+            self.save_to_file()  # Save the updated list to the file
+            self.task_listbox.delete(index)
+            self.task_listbox.insert(index, new_task)
+            self.task_entry.delete(0, tk.END)
+
+            # Restore button behavior
+            self.add_button.config(state=tk.NORMAL)
+            self.edit_button.config(text="Edit Task", command=self.edit_task)
+        else:
+            messagebox.showwarning("Input Error", "You must enter a new task!")
+
+
+    def delete_task(self):
+        try:
+            selected_task_index = self.task_listbox.curselection()[0]
+            self.task_listbox.delete(selected_task_index)
+            self.tdlist.pop(selected_task_index)
+            self.save_to_file()
         except:
-            messagebox.showwarning("Selection Error", "You must select a task to Edit!")
+            messagebox.showwarning("Selection Error", "You must select a task to delete!")
+
+    def mark_done(self):
+        try:
+            task_index = self.task_listbox.curselection()
+            task = self.task_listbox.get(task_index)
+            self.task_listbox.delete(task_index)
+            self.task_listbox.insert(task_index, task + " - Done")
+            self.task_listbox.itemconfig(task_index, {'bg': 'lightgreen'}) 
+        except IndexError:
+            messagebox.showwarning("Selection Error", "Please select a task to mark as done!")
+
+    def search_task(self):
+        search_term = self.task_entry.get().lower()
+        if search_term != "":
+            self.task_listbox.delete(0, tk.END)
+            for task in self.tdlist:
+                if search_term in task.lower():
+                    self.task_listbox.insert(tk.END, task)
+        else:
+            messagebox.showwarning("Warning", "No tasks Available")
 
 
-def deleteFromList():
-    try:
-        selected_task_index = task_listbox.curselection()[0]
-        task_listbox.delete(selected_task_index)
-        tdlist.pop(selected_task_index)
-        SaveToExternalFile(tdlist)
-           
-    except:
-        messagebox.showwarning("Selection Error", "You must select a task to delete!")
-def mark_done():
-    try:
-        task_index = task_listbox.curselection()
-        task = task_listbox.get(task_index)
-        task_listbox.delete(task_index)
-        task_listbox.insert(task_index, task + " - Done")
-        task_listbox.itemconfig(task_index, {'bg': 'lightgreen'})  # Change background color to indicate completion
-    except IndexError:
-        messagebox.showwarning("Selection Error", "Please select a task to mark as done.")
+    def reset_list(self):
+        self.task_listbox.delete(0, tk.END)
+        for task in self.tdlist:
+            self.task_listbox.insert(tk.END, task)
 
 
-def searchList():
-    search_term = task_entry.get().lower()
-    if search_term != "":
-        task_listbox.delete(0, tk.END)
-        for task in tdlist:
-            if search_term in task.lower():
-                task_listbox.insert(tk.END, task)
-    else:
-        messagebox.showwarning("Warning", "No tasks Available")
+    def clear_tasks(self):
+        if messagebox.askyesno("Confirmation", "Are you sure you want to clear all tasks?"):
+            self.tdlist.clear()
+            self.save_to_file()
+            self.task_listbox.delete(0, tk.END)
 
-def Clear():
-     if messagebox.askyesno("Clear Tasks", "Are you sure you want to clear all tasks?"):
-        tdlist.clear()
-        task_listbox.delete(0, tk.END)
-        SaveToExternalFile(tdlist)
+    def exit_app(self):
+        self.save_to_file()
+        self.root.quit()
 
 
-def Exit():
-    SaveToExternalFile(tdlist)
-    root.quit()
-
-
-
-
-tdlist = []
-LoadFile(tdlist)
-
-
-root = tk.Tk()
-root.title("To-Do List Application")
-
-task_entry = tk.Entry(root, width=40)
-task_entry.pack(pady=10)
-
-
-task_listbox = tk.Listbox(root, width=40, height=10, selectmode=tk.SINGLE)
-task_listbox.pack(pady=10)
-
-update_task_list()
-
-add_button = tk.Button(root, text="Add Task", width=15, command=addToList)
-add_button.pack(pady=5)
-
-edit_button = tk.Button(root, text="Edit Task", width=15, command=editToList)
-edit_button.pack(pady=5)
-
-delete_button = tk.Button(root, text="Delete Task", width=15, command=deleteFromList)
-delete_button.pack(pady=5)
-
-search_button = tk.Button(root, text="Search Task", width=15, command=searchList)
-search_button.pack(pady=5)
-
-done_button = tk.Button(root, text="Mark as Done", width=15, command=mark_done)
-done_button.pack(pady=5)
-
-clear_button = tk.Button(root, text="Clear Tasks", width=15, command=Clear)
-clear_button.pack(pady=5)
-
-exit_button = tk.Button(root, text="Exit", width=15, command=Exit)
-exit_button.pack(pady=10)
-
-
-root.mainloop()
+if __name__ == "__main__":
+    root = tk.Tk()
+    app = ToDoListApp(root)
+    root.mainloop()
